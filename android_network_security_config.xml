@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  ANDROID NETWORK SECURITY CONFIG
+  Place this file at: app/src/main/res/xml/network_security_config.xml
+
+  This allows the WebView inside the APK to make HTTPS calls
+  to external domains like script.google.com
+-->
+<network-security-config>
+  <base-config cleartextTrafficPermitted="true">
+    <trust-anchors>
+      <certificates src="system" />
+      <certificates src="user" />
+    </trust-anchors>
+  </base-config>
+  <domain-config cleartextTrafficPermitted="true">
+    <domain includeSubdomains="true">script.google.com</domain>
+    <domain includeSubdomains="true">script.googleusercontent.com</domain>
+    <domain includeSubdomains="true">googleapis.com</domain>
+  </domain-config>
+</network-security-config>
