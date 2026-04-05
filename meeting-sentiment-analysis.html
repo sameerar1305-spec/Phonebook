@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+  <meta name="theme-color" content="#0f1117" />
+  <meta http-equiv="Content-Security-Policy" content="default-src * 'unsafe-inline' 'unsafe-eval' data: blob:;" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <title>Meeting Sentiment Analysis</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
+
+    :root {
+      --bg: #0c0e14; --surface: #13161f; --surface2: #1a1e2a;
+      --border: #252a38; --accent: #4f8ef7; --accent2: #7c3aed;
+      --green: #22d3a5; --amber: #f59e0b; --red: #ef4444;
+      --text: #e8eaf0; --muted: #8890a8;
+    }
+    * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+    body { font-family: 'DM Sans', Arial, sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+
+    /* HEADER */
+    .header { background: linear-gradient(135deg,#0f1117,#161924); border-bottom: 1px solid var(--border); padding: 20px; position: sticky; top: 0; z-index: 100; }
+    .header-top { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 14px; }
+    .app-title { font-family: 'Syne', Arial, sans-serif; font-size: 20px; font-weight: 800; background: linear-gradient(135deg,var(--accent),var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .back-btn { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 8px 12px; color: var(--text); cursor: pointer; font-family: inherit; font-size: 14px; }
+
+    /* TABS */
+    .tabs { display: flex; gap: 0; border-bottom: 1px solid var(--border); }
+    .tab-btn { flex: 1; padding: 12px 16px; background: transparent; border: none; color: var(--muted); font-size: 13px; font-weight: 600; cursor: pointer; border-bottom: 2px solid transparent; transition: 0.2s; }
+    .tab-btn.active { color: var(--text); border-bottom-color: var(--accent); }
+
+    /* CONTENT */
+    .content { padding: 16px 20px 40px; }
+    .loader { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 60px 20px; gap: 16px; }
+    .spinner { width: 44px; height: 44px; border: 3px solid var(--border); border-top-color: var(--accent); border-radius: 50%; animation: spin 0.8s linear infinite; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* FORM */
+    .form-group { margin-bottom: 16px; }
+    .form-label { display: block; font-size: 13px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+    .form-input { width: 100%; padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-family: inherit; }
+    .form-input:focus { outline: none; border-color: var(--accent); }
+    .form-textarea { width: 100%; padding: 12px 14px; background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; color: var(--text); font-size: 14px; font-family: 'DM Sans', Arial, sans-serif; min-height: 150px; resize: vertical; }
+    .form-textarea:focus { outline: none; border-color: var(--accent); }
+
+    /* BUTTONS */
+    .btn { padding: 12px 20px; border-radius: 10px; border: none; font-weight: 600; font-size: 14px; font-family: inherit; cursor: pointer; transition: 0.2s; }
+    .btn-primary { background: linear-gradient(135deg,var(--accent),var(--accent2)); color: #fff; }
+    .btn-primary:hover { opacity: 0.9; }
+    .btn-secondary { background: var(--surface2); border: 1px solid var(--border); color: var(--text); }
+
+    /* SENTIMENT ANALYSIS */
+    .analysis-container { background: var(--surface); border: 1px solid var(--border); border-radius: 14px; padding: 16px; margin-bottom: 16px; }
+    .sentiment-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 16px; }
+    .sentiment-title { font-family: 'Syne', Arial, sans-serif; font-size: 16px; font-weight: 700; }
+    .sentiment-badge { padding: 4px 12px; border-radius: 20px; font-size: 12px; font-weight: 600; }
+    .sentiment-positive { background: rgba(34, 211, 165, 0.15); color: var(--green); }
+    .sentiment-neutral { background: rgba(245, 158, 11, 0.15); color: var(--amber); }
+    .sentiment-negative { background: rgba(239, 68, 68, 0.15); color: var(--red); }
+
+    /* SENTIMENT SCORE BARS */
+    .sentiment-scores { margin-top: 16px; }
+    .score-item { margin-bottom: 12px; }
+    .score-label { display: flex; justify-content: space-between; font-size: 12px; margin-bottom: 6px; }
+    .score-bar { height: 8px; background: var(--surface2); border-radius: 4px; overflow: hidden; }
+    .score-fill { height: 100%; border-radius: 4px; transition: width 0.3s; }
+    .score-fill.positive { background: linear-gradient(90deg, var(--green), #10b981); }
+    .score-fill.neutral { background: linear-gradient(90deg, var(--amber), #f97316); }
+    .score-fill.negative { background: linear-gradient(90deg, var(--red), #dc2626); }
+
+    /* DETAILS */
+    .detail-section { margin-top: 16px; padding-top: 12px; border-top: 1px solid var(--border); }
+    .detail-title { font-size: 12px; font-weight: 600; color: var(--muted); text-transform: uppercase; letter-spacing: 0.6px; margin-bottom: 8px; }
+    .detail-text { font-size: 13px; line-height: 1.6; color: var(--text); white-space: pre-wrap; word-break: break-word; }
+
+    /* TRANSCRIPT */
+    .transcript-box { background: var(--surface2); border: 1px solid var(--border); border-radius: 10px; padding: 12px; max-height: 300px; overflow-y: auto; }
+    .transcript-item { margin-bottom: 12px; padding-bottom: 12px; border-bottom: 1px solid var(--border); }
+    .transcript-item:last-child { border-bottom: none; }
+    .speaker-name { font-weight: 600; color: var(--accent); font-size: 13px; margin-bottom: 4px; }
+    .speaker-text { font-size: 13px; color: var(--muted); }
+
+    /* ERROR & STATES */
+    .error-box { background: rgba(239,68,68,0.1); border: 1px solid rgba(239,68,68,0.3); border-radius: 14px; padding: 16px; font-size: 13px; color: #f87171; line-height: 1.8; margin-bottom: 12px; }
+    .success-box { background: rgba(34,211,165,0.1); border: 1px solid rgba(34,211,165,0.3); border-radius: 14px; padding: 16px; font-size: 13px; color: var(--green); line-height: 1.8; margin-bottom: 12px; }
+    .empty-state { text-align: center; padding: 40px 20px; }
+    .empty-icon { font-size: 48px; margin-bottom: 12px; }
+    .empty-title { font-family: 'Syne', Arial, sans-serif; font-size: 16px; font-weight: 700; margin-bottom: 6px; }
+    .empty-desc { color: var(--muted); font-size: 13px; }
+
+    /* MEETING LIST */
+    .meeting-item { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 14px; margin-bottom: 12px; cursor: pointer; transition: 0.2s; }
+    .meeting-item:hover { border-color: var(--accent); background: rgba(79, 142, 247, 0.05); }
+    .meeting-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 8px; }
+    .meeting-title { font-weight: 600; color: var(--text); font-size: 14px; }
+    .meeting-time { font-size: 12px; color: var(--muted); }
+    .meeting-duration { font-size: 12px; color: var(--muted); margin-top: 4px; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <div class="header-top">
+    <button class="back-btn" onclick="goBack()">← Back</button>
+    <div class="app-title">📊 Meeting Sentiment</div>
+    <div style="width: 60px;"></div>
+  </div>
+  <div class="tabs">
+    <button class="tab-btn active" onclick="switchTab('analyze')">Analyze</button>
+    <button class="tab-btn" onclick="switchTab('history')">History</button>
+  </div>
+</div>
+
+<div class="content">
+  <!-- ANALYZE TAB -->
+  <div id="analyze-tab" class="tab-content">
+    <div class="form-group">
+      <label class="form-label">Meeting Title</label>
+      <input type="text" id="meetingTitle" class="form-input" placeholder="e.g., Q4 Planning Session">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Meeting Participants (comma-separated)</label>
+      <input type="text" id="participants" class="form-input" placeholder="e.g., John Doe, Jane Smith, Bob Johnson">
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Meeting Transcript or Summary</label>
+      <textarea id="transcript" class="form-textarea" placeholder="Paste the Teams meeting transcript here. The AI will analyze sentiment from the conversation..."></textarea>
+    </div>
+
+    <div class="form-group">
+      <label class="form-label">Analysis Focus (Optional)</label>
+      <input type="text" id="analysisFocus" class="form-input" placeholder="e.g., Team morale, Decision satisfaction, Conflict levels">
+    </div>
+
+    <button class="btn btn-primary" onclick="analyzeMeeting()" style="width: 100%; margin-bottom: 16px;">
+      <span id="analyzeText">🚀 Analyze Sentiment</span>
+    </button>
+
+    <div id="analysisResult"></div>
+  </div>
+
+  <!-- HISTORY TAB -->
+  <div id="history-tab" class="tab-content" style="display: none;">
+    <div id="historyList"></div>
+  </div>
+</div>
+
+<script>
+  const ANALYSIS_API = 'https://script.google.com/macros/s/YOUR_COPILOT_APPS_SCRIPT_ID/exec';
+  let currentTab = 'analyze';
+  let analysisHistory = [];
+
+  // Load history from localStorage
+  function loadHistory() {
+    const saved = localStorage.getItem('meetingSentimentHistory');
+    analysisHistory = saved ? JSON.parse(saved) : [];
+  }
+
+  // Save history to localStorage
+  function saveHistory() {
+    localStorage.setItem('meetingSentimentHistory', JSON.stringify(analysisHistory));
+  }
+
+  // Switch tabs
+  function switchTab(tab) {
+    currentTab = tab;
+    document.querySelectorAll('.tab-content').forEach(el => el.style.display = 'none');
+    document.getElementById(tab + '-tab').style.display = 'block';
+    document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+    event.target.classList.add('active');
+
+    if (tab === 'history') {
+      displayHistory();
+    }
+  }
+
+  // Go back to main app
+  function goBack() {
+    window.location.href = 'index.html';
+  }
+
+  // Analyze meeting sentiment
+  async function analyzeMeeting() {
+    const title = document.getElementById('meetingTitle').value.trim();
+    const participants = document.getElementById('participants').value.trim();
+    const transcript = document.getElementById('transcript').value.trim();
+    const focus = document.getElementById('analysisFocus').value.trim();
+
+    if (!title || !transcript) {
+      showAnalysisError('Please provide at least a meeting title and transcript.');
+      return;
+    }
+
+    setAnalyzing(true);
+
+    try {
+      const response = await fetch(ANALYSIS_API, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          action: 'analyzeSentiment',
+          meetingTitle: title,
+          participants: participants,
+          transcript: transcript,
+          analysisFocus: focus
+        })
+      });
+
+      const data = await response.json();
+
+      if (data.success) {
+        displayAnalysisResult(data.analysis);
+
+        // Save to history
+        analysisHistory.unshift({
+          id: Date.now(),
+          title: title,
+          timestamp: new Date().toLocaleString(),
+          participants: participants,
+          analysis: data.analysis
+        });
+        saveHistory();
+
+        // Clear form
+        document.getElementById('meetingTitle').value = '';
+        document.getElementById('participants').value = '';
+        document.getElementById('transcript').value = '';
+        document.getElementById('analysisFocus').value = '';
+      } else {
+        showAnalysisError(data.error || 'Analysis failed. Please try again.');
+      }
+    } catch (error) {
+      showAnalysisError('Connection error: ' + error.message);
+    } finally {
+      setAnalyzing(false);
+    }
+  }
+
+  // Display analysis result
+  function displayAnalysisResult(analysis) {
+    const resultDiv = document.getElementById('analysisResult');
+    const sentiment = analysis.overallSentiment;
+    const sentimentClass = sentiment.toLowerCase();
+
+    resultDiv.innerHTML = `
+      <div class="success-box">✅ Analysis completed successfully</div>
+
+      <div class="analysis-container">
+        <div class="sentiment-header">
+          <div class="sentiment-title">Overall Sentiment</div>
+          <div class="sentiment-badge sentiment-${sentimentClass}">${sentiment}</div>
+        </div>
+
+        <div class="sentiment-scores">
+          <div class="score-item">
+            <div class="score-label">
+              <span>Positive</span>
+              <span>${Math.round(analysis.sentimentScores.positive * 100)}%</span>
+            </div>
+            <div class="score-bar">
+              <div class="score-fill positive" style="width: ${analysis.sentimentScores.positive * 100}%"></div>
+            </div>
+          </div>
+
+          <div class="score-item">
+            <div class="score-label">
+              <span>Neutral</span>
+              <span>${Math.round(analysis.sentimentScores.neutral * 100)}%</span>
+            </div>
+            <div class="score-bar">
+              <div class="score-fill neutral" style="width: ${analysis.sentimentScores.neutral * 100}%"></div>
+            </div>
+          </div>
+
+          <div class="score-item">
+            <div class="score-label">
+              <span>Negative</span>
+              <span>${Math.round(analysis.sentimentScores.negative * 100)}%</span>
+            </div>
+            <div class="score-bar">
+              <div class="score-fill negative" style="width: ${analysis.sentimentScores.negative * 100}%"></div>
+            </div>
+          </div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-title">Key Insights</div>
+          <div class="detail-text">${escapeHtml(analysis.keyInsights)}</div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-title">Summary</div>
+          <div class="detail-text">${escapeHtml(analysis.summary)}</div>
+        </div>
+
+        <div class="detail-section">
+          <div class="detail-title">Recommendations</div>
+          <div class="detail-text">${escapeHtml(analysis.recommendations)}</div>
+        </div>
+
+        ${analysis.emotionalTones ? `
+        <div class="detail-section">
+          <div class="detail-title">Emotional Tones Detected</div>
+          <div class="detail-text">${escapeHtml(analysis.emotionalTones)}</div>
+        </div>
+        ` : ''}
+
+        ${analysis.participantInsights ? `
+        <div class="detail-section">
+          <div class="detail-title">Participant Insights</div>
+          <div class="detail-text">${escapeHtml(analysis.participantInsights)}</div>
+        </div>
+        ` : ''}
+      </div>
+    `;
+  }
+
+  // Display history
+  function displayHistory() {
+    const historyDiv = document.getElementById('historyList');
+
+    if (analysisHistory.length === 0) {
+      historyDiv.innerHTML = `
+        <div class="empty-state">
+          <div class="empty-icon">📜</div>
+          <div class="empty-title">No Analysis History</div>
+          <div class="empty-desc">Analyze your first meeting to get started</div>
+        </div>
+      `;
+      return;
+    }
+
+    historyDiv.innerHTML = analysisHistory.map(item => `
+      <div class="meeting-item" onclick="viewHistoryItem(${item.id})">
+        <div class="meeting-header">
+          <div class="meeting-title">${escapeHtml(item.title)}</div>
+          <div class="sentiment-badge sentiment-${item.analysis.overallSentiment.toLowerCase()}">
+            ${item.analysis.overallSentiment}
+          </div>
+        </div>
+        <div class="meeting-time">${item.timestamp}</div>
+        ${item.participants ? `<div class="meeting-duration">👥 ${escapeHtml(item.participants)}</div>` : ''}
+      </div>
+    `).join('');
+  }
+
+  // View history item
+  function viewHistoryItem(id) {
+    const item = analysisHistory.find(x => x.id === id);
+    if (item) {
+      document.getElementById('meetingTitle').value = item.title;
+      document.getElementById('participants').value = item.participants;
+      switchTab('analyze');
+      displayAnalysisResult(item.analysis);
+    }
+  }
+
+  // Show analysis error
+  function showAnalysisError(msg) {
+    document.getElementById('analysisResult').innerHTML = `<div class="error-box">⚠️ ${escapeHtml(msg)}</div>`;
+  }
+
+  // Set analyzing state
+  function setAnalyzing(isAnalyzing) {
+    const btn = document.querySelector('.btn-primary');
+    btn.disabled = isAnalyzing;
+    btn.style.opacity = isAnalyzing ? '0.6' : '1';
+    document.getElementById('analyzeText').textContent = isAnalyzing ? '⏳ Analyzing...' : '🚀 Analyze Sentiment';
+  }
+
+  // Escape HTML
+  function escapeHtml(text) {
+    const map = {
+      '&': '&amp;',
+      '<': '&lt;',
+      '>': '&gt;',
+      '"': '&quot;',
+      "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, m => map[m]);
+  }
+
+  // Initialize
+  window.addEventListener('load', () => {
+    loadHistory();
+  });
+</script>
+</body>
+</html>
