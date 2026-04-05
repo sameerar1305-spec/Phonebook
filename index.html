@@ -102,7 +102,7 @@
     <input class="search-input" id="srch" type="search" placeholder="Search name, phone, city…" oninput="doFilter()" />
   </div>
 </div>
-<div class="filter-row" id="frow" style="display:none"></div>
+<div class="filter-row" id="frow" style="display:none !important"></div>
 <div class="content" id="main"><div class="loader"><div class="spinner"></div><p>Connecting…</p></div></div>
 
 <script>
@@ -148,7 +148,7 @@
     all = data.contacts; shown = all.slice();
     document.getElementById('hdr').style.display='block';
     document.getElementById('frow').style.display='flex';
-    buildCityPills(); render();
+    render();
   }
 
   // ── ERROR DISPLAY ───────────────────────────────────────
