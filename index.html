@@ -258,9 +258,9 @@
     shown=all.filter(function(c){
       var n=(c.Name||c.name||'').toLowerCase();
       var ph=(c.Phone||c.phone||c['Phone Number']||'').toLowerCase();
-      var ph1=(c.Phone1||c.phone1||c['Alternate Phone Number']||'').toLowerCase();
       var em=(c.Email||c.email||'').toLowerCase();
       var ad=(c.Address||c.address||'').toLowerCase();
+      var ph1=(c.Phone1||c.phone1||c['Alternate Phone Number']||'').toLowerCase();
       var ad1=(c.Address1||c.address1||'').toLowerCase();
       var ms=!q||[n,ph,em,pr,ad].some(function(v){return v.indexOf(q)>=0;});
       var mf=activeF==='All'||(c.Profession||c.profession||'')===activeF;
@@ -282,9 +282,9 @@
     el.innerHTML=shown.map(function(c,i){
       var n=c.Name||c.name||'Unknown';
       var ph=c.Phone||c.phone||c['Phone Number']||'';
-      var ph1=c.Phone1||c.phone1||c['Alternate Phone Number']||'';
       var em=c.Email||c.email||'';
       var ad=c.Address||c.address||'';
+      var ph1=c.Phone1||c.phone1||c['Alternate Phone Number']||'';
       var ad1=(c.Address1||c.address1||'';
       var col=avatarColor(n);
       return '<div class="contact-card" id="cd'+i+'">'+
@@ -296,7 +296,7 @@
         '<div class="card-details">'+
           (ph?'<div class="drow"><div class="dicon" style="background:rgba(34,211,165,0.12)">📞</div><div class="dcontent"><div class="dlabel">Phone</div><div class="dvalue">'+esc(ph)+'</div></div><a href="tel:'+esc(ph)+'" class="abtn abtn-call">📞</a></div>':'')+
           (em?'<div class="drow"><div class="dicon" style="background:rgba(79,142,247,0.12)">✉️</div><div class="dcontent"><div class="dlabel">Email</div><div class="dvalue">'+esc(em)+'</div></div><a href="mailto:'+esc(em)+'" class="abtn abtn-email">✉️</a></div>':'')+
-          (pr?'<div class="drow"><div class="dicon" style="background:rgba(167,139,250,0.12)">💼</div><div class="dcontent"><div class="dlabel">Profession</div><div class="dvalue">'+esc(pr)+'</div></div></div>':'')+
+          (pr?'<div class="drow"><div class="dicon" style="background:rgba(167,139,250,0.12)">💼</div><div class="dcontent"><div class="dlabel">Alternate Phone Number</div><div class="dvalue">'+esc(ph1)+'</div></div></div>':'')+
           (ad?'<div class="drow"><div class="dicon" style="background:rgba(251,191,36,0.12)">📍</div><div class="dcontent"><div class="dlabel">Address</div><div class="dvalue" style="white-space:normal;font-size:13px">'+esc(ad)+'</div></div></div>':'')+
           ((ph||em)?'<div class="qactions">'+
             (ph?'<a href="tel:'+esc(ph)+'" class="qbtn qbtn-call">📞 Call</a>':'')+
