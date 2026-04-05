@@ -260,7 +260,6 @@
       var ph=(c.Phone||c.phone||c['Phone Number']||'').toLowerCase();
       var ph1=(c.Phone1||c.phone1||c['Alternate Phone Number']||'').toLowerCase();
       var em=(c.Email||c.email||'').toLowerCase();
-      var pr=(c.Profession||c.profession||'').toLowerCase();
       var ad=(c.Address||c.address||'').toLowerCase();
       var ad1=(c.Address1||c.address1||'').toLowerCase();
       var ms=!q||[n,ph,em,pr,ad].some(function(v){return v.indexOf(q)>=0;});
@@ -285,7 +284,6 @@
       var ph=c.Phone||c.phone||c['Phone Number']||'';
       var ph1=c.Phone1||c.phone1||c['Alternate Phone Number']||'';
       var em=c.Email||c.email||'';
-      var pr=c.Profession||c.profession||'';
       var ad=c.Address||c.address||'';
       var ad1=(c.Address1||c.address1||'';
       var col=avatarColor(n);
