@@ -258,11 +258,11 @@
     shown=all.filter(function(c){
       var n=(c.Name||c.name||'').toLowerCase();
       var ph=(c.Phone||c.phone||c['Phone Number']||'').toLowerCase();
-      ar ph=(c.Phone1||c.phone1||c['Alternate Phone Number']||'').toLowerCase();
+      var ph1=(c.Phone1||c.phone1||c['Alternate Phone Number']||'').toLowerCase();
       var em=(c.Email||c.email||'').toLowerCase();
       var pr=(c.Profession||c.profession||'').toLowerCase();
       var ad=(c.Address||c.address||'').toLowerCase();
-      var ad=(c.Address1||c.address1||'').toLowerCase();
+      var ad1=(c.Address1||c.address1||'').toLowerCase();
       var ms=!q||[n,ph,em,pr,ad].some(function(v){return v.indexOf(q)>=0;});
       var mf=activeF==='All'||(c.Profession||c.profession||'')===activeF;
       return ms&&mf;
@@ -283,9 +283,11 @@
     el.innerHTML=shown.map(function(c,i){
       var n=c.Name||c.name||'Unknown';
       var ph=c.Phone||c.phone||c['Phone Number']||'';
+      var ph1=c.Phone1||c.phone1||c['Alternate Phone Number']||'';
       var em=c.Email||c.email||'';
       var pr=c.Profession||c.profession||'';
       var ad=c.Address||c.address||'';
+      var ad1=(c.Address1||c.address1||'';
       var col=avatarColor(n);
       return '<div class="contact-card" id="cd'+i+'">'+
         '<div class="card-main" onclick="tog('+i+')">'+
