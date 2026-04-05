@@ -130,10 +130,10 @@
   function fld(c, key) {
     return c[key] || c[key.toLowerCase()] || c[key.toUpperCase()] || '';
   }
-  function getNameEn(c)  { return fld(c,'nameenglish') || fld(c,'NameEnglish') || fld(c,'name') || 'Unknown'; }
-  function getNameKn(c)  { return fld(c,'namekannada') || fld(c,'NameKannada') || ''; }
+  function getNameEn(c)  { return fld(c,'nameenglish') || fld(c,'Name English') || fld(c,'name') || 'Unknown'; }
+  function getNameKn(c)  { return fld(c,'namekannada') || fld(c,'Name Kannada') || ''; }
   function getPhone(c)   { return fld(c,'phone') || fld(c,'Phone') || ''; }
-  function getPhone1(c)  { return fld(c,'phone1') || fld(c,'Phone1') || ''; }
+  function getPhone1(c)  { return fld(c,'phone1') || fld(c,'Alternate Phone') || ''; }
   function getAddress(c) { return fld(c,'address') || fld(c,'Address') || ''; }
   function getAddress1(c){ return fld(c,'address1') || fld(c,'Address1') || ''; }
   function getCity(c)    { return fld(c,'city') || fld(c,'City') || ''; }
