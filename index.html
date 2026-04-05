@@ -8,7 +8,6 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <title>Contact Directory</title>
-  <link rel="manifest" href="manifest.json" />
   <style>
     @import url('https://fonts.googleapis.com/css2?family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap');
 
@@ -60,6 +59,7 @@
     .avatar { width: 46px; height: 46px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-family: 'Syne',Arial,sans-serif; font-weight: 700; font-size: 18px; color: #fff; flex-shrink: 0; }
     .card-info { flex: 1; min-width: 0; }
     .card-name { font-family: 'Syne',Arial,sans-serif; font-weight: 700; font-size: 16px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .card-name-kannada { font-size: 13px; color: var(--accent); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-weight: 500; }
     .card-sub { font-size: 12px; color: var(--muted); margin-top: 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
     .chevron { color: var(--muted); transition: transform 0.2s; flex-shrink: 0; }
     .contact-card.open .chevron { transform: rotate(180deg); }
@@ -71,13 +71,13 @@
     .dcontent { flex: 1; min-width: 0; }
     .dlabel { font-size: 10px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: 0.6px; }
     .dvalue { font-size: 14px; color: var(--text); margin-top: 1px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .dvalue.wrap { white-space: normal; font-size: 13px; }
     .abtn { width: 36px; height: 36px; border-radius: 10px; border: none; display: flex; align-items: center; justify-content: center; font-size: 16px; text-decoration: none; flex-shrink: 0; cursor: pointer; }
     .abtn-call { background: rgba(34,211,165,0.15); color: var(--green); }
-    .abtn-email { background: rgba(79,142,247,0.15); color: var(--accent); }
     .qactions { display: flex; gap: 8px; padding: 12px 18px 16px; border-top: 1px solid var(--border); }
     .qbtn { flex: 1; padding: 10px 8px; border-radius: 12px; font-size: 13px; font-weight: 500; font-family: inherit; display: flex; align-items: center; justify-content: center; gap: 6px; text-decoration: none; }
     .qbtn-call { border: 1px solid rgba(34,211,165,0.3); background: rgba(34,211,165,0.08); color: var(--green); }
-    .qbtn-email { border: 1px solid rgba(79,142,247,0.3); background: rgba(79,142,247,0.08); color: var(--accent); }
+    .qbtn-call2 { border: 1px solid rgba(79,142,247,0.3); background: rgba(79,142,247,0.08); color: var(--accent); }
     .empty { text-align: center; padding: 60px 20px; }
     .empty-icon { font-size: 48px; margin-bottom: 16px; }
     .empty-title { font-family: 'Syne',Arial,sans-serif; font-size: 18px; font-weight: 700; margin-bottom: 8px; }
@@ -99,7 +99,7 @@
   </div>
   <div class="search-wrap">
     <svg class="search-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
-    <input class="search-input" id="srch" type="search" placeholder="Search name, phone, profession…" oninput="doFilter()" />
+    <input class="search-input" id="srch" type="search" placeholder="Search name, phone, city…" oninput="doFilter()" />
   </div>
 </div>
 <div class="filter-row" id="frow" style="display:none"></div>
@@ -107,31 +107,48 @@
 
 <script>
   // ── CONFIG ──────────────────────────────────────────────
-  var API = 'https://script.google.com/macros/s/AKfycbw1XV2XF8nfh3xk6bRfXko5l0LxRThnalnCtoAY4ubyXIoMtqbXSi4EuHxSz1mOFWMDMQ/exec';
+  var API = 'https://script.google.com/macros/s/AKfycbzM0QASabqQ3QYvIqhzJeRymtDKw447c3iBTluRQz_LHBCRGJvmUQ0qilEzFv7Yf3L4/exec';
 
-  var all = [], shown = [], activeF = 'All';
+  // Column names from Google Sheet:
+  // nameenglish, namekannada, phone, phone1, address, address1, city, picode
+
+  var all = [], shown = [], activeCity = 'All';
   var COLORS = [
     ['#4f46e5','#7c3aed'],['#0891b2','#0e7490'],['#059669','#047857'],
     ['#d97706','#b45309'],['#dc2626','#b91c1c'],['#7c3aed','#6d28d9'],
     ['#0284c7','#0369a1'],['#16a34a','#15803d'],['#9333ea','#7e22ce']
   ];
 
-  function avatarColor(n){var h=0;for(var i=0;i<n.length;i++)h=n.charCodeAt(i)+((h<<5)-h);return COLORS[Math.abs(h)%COLORS.length];}
-  function initials(n){var p=n.trim().split(' ').filter(Boolean);return p.length===1?p[0][0].toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase();}
-  function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
-  function setMain(h){document.getElementById('main').innerHTML=h;}
-  function setLoader(t){setMain('<div class="loader"><div class="spinner"></div><p>'+t+'</p></div>');}
+  function avatarColor(n){ var h=0; for(var i=0;i<n.length;i++) h=n.charCodeAt(i)+((h<<5)-h); return COLORS[Math.abs(h)%COLORS.length]; }
+  function initials(n){ var p=n.trim().split(' ').filter(Boolean); return p.length===1?p[0][0].toUpperCase():(p[0][0]+p[p.length-1][0]).toUpperCase(); }
+  function esc(s){ return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+  function setMain(h){ document.getElementById('main').innerHTML=h; }
+  function setLoader(t){ setMain('<div class="loader"><div class="spinner"></div><p>'+t+'</p></div>'); }
+
+  // ── FIELD HELPERS ───────────────────────────────────────
+  // Handles both lowercase (sheet column names) and possible variations
+  function fld(c, key) {
+    return c[key] || c[key.toLowerCase()] || c[key.toUpperCase()] || '';
+  }
+  function getNameEn(c)  { return fld(c,'nameenglish') || fld(c,'NameEnglish') || fld(c,'name') || 'Unknown'; }
+  function getNameKn(c)  { return fld(c,'namekannada') || fld(c,'NameKannada') || ''; }
+  function getPhone(c)   { return fld(c,'phone') || fld(c,'Phone') || ''; }
+  function getPhone1(c)  { return fld(c,'phone1') || fld(c,'Phone1') || ''; }
+  function getAddress(c) { return fld(c,'address') || fld(c,'Address') || ''; }
+  function getAddress1(c){ return fld(c,'address1') || fld(c,'Address1') || ''; }
+  function getCity(c)    { return fld(c,'city') || fld(c,'City') || ''; }
+  function getPicode(c)  { return fld(c,'picode') || fld(c,'Picode') || fld(c,'pincode') || fld(c,'Pincode') || ''; }
 
   // ── ON SUCCESS ──────────────────────────────────────────
   function onData(data){
-    if(!data||!data.success||!Array.isArray(data.contacts)){
-      showErr('Apps Script returned unexpected data. Ensure sheet columns are: Name, Phone, Email, Profession, Address','');
+    if(!data || !data.success || !Array.isArray(data.contacts)){
+      showErr('Apps Script returned unexpected data. Ensure sheet columns are: nameenglish, namekannada, phone, phone1, address, address1, city, picode','');
       return;
     }
-    all=data.contacts; shown=all.slice();
+    all = data.contacts; shown = all.slice();
     document.getElementById('hdr').style.display='block';
     document.getElementById('frow').style.display='flex';
-    buildPills(); render();
+    buildCityPills(); render();
   }
 
   // ── ERROR DISPLAY ───────────────────────────────────────
@@ -218,25 +235,25 @@
     var btn=document.getElementById('rfBtn');
     btn.classList.add('spinning');
     tryXHR(API,
-      function(d){btn.classList.remove('spinning');if(d.success){all=d.contacts;buildPills();doFilter();}},
+      function(d){btn.classList.remove('spinning');if(d.success){all=d.contacts;buildCityPills();doFilter();}},
       function(){tryFetch(API,
-        function(d){btn.classList.remove('spinning');if(d.success){all=d.contacts;buildPills();doFilter();}},
+        function(d){btn.classList.remove('spinning');if(d.success){all=d.contacts;buildCityPills();doFilter();}},
         function(){btn.classList.remove('spinning');}
       );}
     );
   }
 
-  // ── FILTER PILLS ────────────────────────────────────────
-  function buildPills(){
-    var profs=[...new Set(all.map(function(c){return c['Profession']||c['profession']||'';}).filter(Boolean))];
+  // ── CITY FILTER PILLS ───────────────────────────────────
+  function buildCityPills(){
+    var cities=[...new Set(all.map(function(c){return getCity(c);}).filter(Boolean))].sort();
     var row=document.getElementById('frow');
     row.innerHTML='';
-    ['All'].concat(profs).forEach(function(p){
+    ['All'].concat(cities).forEach(function(city){
       var btn=document.createElement('button');
-      btn.className='filter-pill'+(p==='All'?' active':'');
-      btn.textContent=p;
+      btn.className='filter-pill'+(city==='All'?' active':'');
+      btn.textContent=city;
       btn.onclick=function(){
-        activeF=p;
+        activeCity=city;
         document.querySelectorAll('.filter-pill').forEach(function(x){x.classList.remove('active');});
         btn.classList.add('active');
         doFilter();
@@ -245,16 +262,20 @@
     });
   }
 
+  // ── SEARCH + FILTER ─────────────────────────────────────
   function doFilter(){
     var q=(document.getElementById('srch')?document.getElementById('srch').value||'':'').toLowerCase();
     shown=all.filter(function(c){
-      var n=(c.Name||c.name||'').toLowerCase();
-      var ph=(c.Phone||c.phone||c['Phone Number']||'').toLowerCase();
-      var em=(c.Email||c.email||'').toLowerCase();
-      var pr=(c.Profession||c.profession||'').toLowerCase();
-      var ad=(c.Address||c.address||'').toLowerCase();
-      var ms=!q||[n,ph,em,pr,ad].some(function(v){return v.indexOf(q)>=0;});
-      var mf=activeF==='All'||(c.Profession||c.profession||'')===activeF;
+      var ne=getNameEn(c).toLowerCase();
+      var nk=getNameKn(c).toLowerCase();
+      var ph=getPhone(c).toLowerCase();
+      var ph1=getPhone1(c).toLowerCase();
+      var ad=getAddress(c).toLowerCase();
+      var ad1=getAddress1(c).toLowerCase();
+      var ct=getCity(c).toLowerCase();
+      var pc=getPicode(c).toLowerCase();
+      var ms=!q||[ne,nk,ph,ph1,ad,ad1,ct,pc].some(function(v){return v.indexOf(q)>=0;});
+      var mf=activeCity==='All'||getCity(c)===activeCity;
       return ms&&mf;
     });
     render();
@@ -263,43 +284,100 @@
   // ── RENDER ──────────────────────────────────────────────
   function render(){
     var b=document.getElementById('badge');
-    if(b)b.textContent=shown.length+' contact'+(shown.length!==1?'s':'');
+    if(b) b.textContent=shown.length+' contact'+(shown.length!==1?'s':'');
     setMain('<div class="contacts-list" id="clist"></div>');
     var el=document.getElementById('clist');
     if(!shown.length){
-      el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No contacts found</div><div class="empty-desc">Try a different search term</div></div>';
+      el.innerHTML='<div class="empty"><div class="empty-icon">🔍</div><div class="empty-title">No contacts found</div><div class="empty-desc">Try a different search or city filter</div></div>';
       return;
     }
     el.innerHTML=shown.map(function(c,i){
-      var n=c.Name||c.name||'Unknown';
-      var ph=c.Phone||c.phone||c['Phone Number']||'';
-      var em=c.Email||c.email||'';
-      var pr=c.Profession||c.profession||'';
-      var ad=c.Address||c.address||'';
-      var col=avatarColor(n);
+      var ne   = getNameEn(c);
+      var nk   = getNameKn(c);
+      var ph   = getPhone(c);
+      var ph1  = getPhone1(c);
+      var ad   = getAddress(c);
+      var ad1  = getAddress1(c);
+      var city = getCity(c);
+      var pic  = getPicode(c);
+      var col  = avatarColor(ne);
+
+      // Build full address string
+      var fullAddr = [ad, ad1, city, pic].filter(Boolean).join(', ');
+
       return '<div class="contact-card" id="cd'+i+'">'+
         '<div class="card-main" onclick="tog('+i+')">'+
-          '<div class="avatar" style="background:linear-gradient(135deg,'+col[0]+','+col[1]+')">'+initials(n)+'</div>'+
-          '<div class="card-info"><div class="card-name">'+esc(n)+'</div><div class="card-sub">'+esc(pr||ph)+'</div></div>'+
+          '<div class="avatar" style="background:linear-gradient(135deg,'+col[0]+','+col[1]+')">'+initials(ne)+'</div>'+
+          '<div class="card-info">'+
+            '<div class="card-name">'+esc(ne)+'</div>'+
+            (nk?'<div class="card-name-kannada">'+esc(nk)+'</div>':'')+
+            '<div class="card-sub">'+esc(ph||city)+'</div>'+
+          '</div>'+
           '<svg class="chevron" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="m6 9 6 6 6-6"/></svg>'+
         '</div>'+
+
         '<div class="card-details">'+
-          (ph?'<div class="drow"><div class="dicon" style="background:rgba(34,211,165,0.12)">📞</div><div class="dcontent"><div class="dlabel">Phone</div><div class="dvalue">'+esc(ph)+'</div></div><a href="tel:'+esc(ph)+'" class="abtn abtn-call">📞</a></div>':'')+
-          (em?'<div class="drow"><div class="dicon" style="background:rgba(79,142,247,0.12)">✉️</div><div class="dcontent"><div class="dlabel">Email</div><div class="dvalue">'+esc(em)+'</div></div><a href="mailto:'+esc(em)+'" class="abtn abtn-email">✉️</a></div>':'')+
-          (pr?'<div class="drow"><div class="dicon" style="background:rgba(167,139,250,0.12)">💼</div><div class="dcontent"><div class="dlabel">Profession</div><div class="dvalue">'+esc(pr)+'</div></div></div>':'')+
-          (ad?'<div class="drow"><div class="dicon" style="background:rgba(251,191,36,0.12)">📍</div><div class="dcontent"><div class="dlabel">Address</div><div class="dvalue" style="white-space:normal;font-size:13px">'+esc(ad)+'</div></div></div>':'')+
-          ((ph||em)?'<div class="qactions">'+
-            (ph?'<a href="tel:'+esc(ph)+'" class="qbtn qbtn-call">📞 Call</a>':'')+
-            (em?'<a href="mailto:'+esc(em)+'" class="qbtn qbtn-email">✉️ Email</a>':'')+
-          '</div>':'')+
-        '</div></div>';
+
+          // Name Kannada
+          (nk?
+            '<div class="drow">'+
+              '<div class="dicon" style="background:rgba(79,142,247,0.12)">🏷️</div>'+
+              '<div class="dcontent"><div class="dlabel">Name (Kannada)</div><div class="dvalue">'+esc(nk)+'</div></div>'+
+            '</div>':'')+
+
+          // Primary Phone
+          (ph?
+            '<div class="drow">'+
+              '<div class="dicon" style="background:rgba(34,211,165,0.12)">📞</div>'+
+              '<div class="dcontent"><div class="dlabel">Phone</div><div class="dvalue">'+esc(ph)+'</div></div>'+
+              '<a href="tel:'+esc(ph)+'" class="abtn abtn-call">📞</a>'+
+            '</div>':'')+
+
+          // Alternate Phone
+          (ph1?
+            '<div class="drow">'+
+              '<div class="dicon" style="background:rgba(79,142,247,0.12)">📱</div>'+
+              '<div class="dcontent"><div class="dlabel">Alternate Phone</div><div class="dvalue">'+esc(ph1)+'</div></div>'+
+              '<a href="tel:'+esc(ph1)+'" class="abtn abtn-call">📞</a>'+
+            '</div>':'')+
+
+          // Address
+          (ad?
+            '<div class="drow">'+
+              '<div class="dicon" style="background:rgba(251,191,36,0.12)">📍</div>'+
+              '<div class="dcontent"><div class="dlabel">Address</div><div class="dvalue wrap">'+esc(ad)+'</div></div>'+
+            '</div>':'')+
+
+          // Address line 2
+          (ad1?
+            '<div class="drow">'+
+              '<div class="dicon" style="background:rgba(251,191,36,0.12)">🏠</div>'+
+              '<div class="dcontent"><div class="dlabel">Address 2</div><div class="dvalue wrap">'+esc(ad1)+'</div></div>'+
+            '</div>':'')+
+
+          // City + Pincode
+          ((city||pic)?
+            '<div class="drow">'+
+              '<div class="dicon" style="background:rgba(167,139,250,0.12)">🏙️</div>'+
+              '<div class="dcontent"><div class="dlabel">City / Pincode</div><div class="dvalue">'+esc([city,pic].filter(Boolean).join(' – '))+'</div></div>'+
+            '</div>':'')+
+
+          // Quick action buttons
+          ((ph||ph1)?
+            '<div class="qactions">'+
+              (ph?'<a href="tel:'+esc(ph)+'" class="qbtn qbtn-call">📞 Call</a>':'')+
+              (ph1?'<a href="tel:'+esc(ph1)+'" class="qbtn qbtn-call2">📱 Alt Call</a>':'')+
+            '</div>':'')+
+
+        '</div>'+
+      '</div>';
     }).join('');
   }
 
-  function tog(i){document.getElementById('cd'+i).classList.toggle('open');}
+  function tog(i){ document.getElementById('cd'+i).classList.toggle('open'); }
 
   // ── START ────────────────────────────────────────────────
-  window.onload=boot;
+  window.onload = boot;
 </script>
 </body>
 </html>
