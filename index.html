@@ -142,7 +142,7 @@
   // ── ON SUCCESS ──────────────────────────────────────────
   function onData(data){
     if(!data || !data.success || !Array.isArray(data.contacts)){
-      showErr('Apps Script returned unexpected data. Ensure sheet columns are: nameenglish, namekannada, phone, phone1, address, address1, city, picode, ADBMSID','');
+      showErr('Apps Script returned unexpected data. Ensure sheet columns are: nameenglish, namekannada, phone, phone1, address, address1, city, picode, AKBMSID','');
       return;
     }
     all = data.contacts; shown = all.slice();
@@ -301,7 +301,7 @@
       var ad1  = getAddress1(c);
       var city = getCity(c);
       var pic  = getPicode(c);
-      var id   = getABMSID(c);
+      var id   = getAKBMSID(c);
       var col  = avatarColor(ne);
 
       // Build full address string
@@ -364,11 +364,11 @@
               '<div class="dcontent"><div class="dlabel">City / Pincode</div><div class="dvalue">'+esc([city,pic].filter(Boolean).join(' – '))+'</div></div>'+
             '</div>':'')+
 
-        // ADBMS ID
+        // AKBMS ID
           (ad1?
             '<div class="drow">'+
               '<div class="dicon" style="background:rgba(251,191,36,0.12)">🏠</div>'+
-              '<div class="dcontent"><div class="dlabel">ADBMS ID Number</div><div class="dvalue wrap">'+esc(id)+'</div></div>'+
+              '<div class="dcontent"><div class="dlabel">AKBMS ID Number</div><div class="dvalue wrap">'+esc(id)+'</div></div>'+
             '</div>':'')+
 
           // Quick action buttons
